@@ -3,6 +3,8 @@ project(pdc_mini_aevol)
 
 set(CMAKE_CXX_STANDARD 14)
 
+set(USE_OMP ON CACHE BOOL "Whether to enable OpenMP parallelization")
+
 if ( DO_TRACES )
     add_definitions(-DTRACES)
     message( STATUS "Traces are activated" )
