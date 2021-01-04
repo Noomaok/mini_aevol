@@ -678,9 +678,23 @@ void Organism::look_for_new_promoters_starting_between(int32_t pos_1, int32_t po
     // Hamming distance of the sequence from the promoter consensus
 
 	// Z algorithm https://www.geeksforgeeks.org/z-algorithm-linear-time-pattern-searching-algorithm/
+	int zArray[pos_2 - pos_1]; 
     for (int32_t i = pos_1; i < pos_2; i++) {
-        int8_t dist = dna_->promoter_at(i);
+		if (i == pos_1) {
+			zArray[i-pos_1] = 0;
+		}
+		else {
+			for (int32_t j = pos_1; j < pos_2; j++){
+				if (dna_->seq_[j] == dna_->seq_[i]){
+					zArray[i-pos_1]++;
+				}
+			}
+		}
+		//TODO: test algo
 
+        // int8_t dist = dna_->promoter_at(i);
+
+		//TODO: rajouter tous ceux qui sont à >=18 dans le zarray
         if (dist <= PROM_MAX_DIFF) { // dist takes the hamming distance of the sequence from the consensus
             add_new_promoter(i, dist);
         }
