@@ -36,6 +36,10 @@
 #include "Abstract_ExpManager.h"
 #include "ExpManager.h"
 
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 void print_help(char* prog_path) {
     // Get the program file-name in prog_name (strip prog_path of the path)
     char* prog_name; // No new, it will point to somewhere inside prog_path
