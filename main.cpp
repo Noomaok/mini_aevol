@@ -76,6 +76,7 @@ void print_help(char* prog_path) {
     printf("  -b, --backup_step BACKUP_STEP\tDo a simulation backup/checkpoint every BACKUP_STEP\n");
     printf("  -r, --resume RESUME_STEP\tResume the simulation from the RESUME_STEP generations\n");
     printf("  -s, --seed SEED\tChange the seed for the pseudo random generator\n");
+    printf("  -t, --threads NUM_THREADS\tSet a number of threads to use\n");
 }
 
 int main(int argc, char* argv[]) {
@@ -88,8 +89,9 @@ int main(int argc, char* argv[]) {
     int resume = -1;
     int backup_step = -1;
     int seed = -1;
+    int threads = 1;
 
-    const char * options_list = "Hn:w:h:m:g:b:r:s:";
+    const char * options_list = "Hn:w:h:m:g:b:r:s:t:";
     static struct option long_options_list[] = {
             // Print help
             { "help",     no_argument,        NULL, 'H' },
@@ -109,12 +111,10 @@ int main(int argc, char* argv[]) {
             { "backup_step", required_argument,  NULL, 'b' },
             // Seed
             { "seed", required_argument,  NULL, 's' },
+            // Threads
+            { "threads", required_argument,  NULL, 't' },
             { 0, 0, 0, 0 }
     };
-
-#ifdef USE_OMP
-    omp_set_num_threads(4);
-#endif
 
     // -------------------------------------------------------------------------
     // 3) Get actual values of the command-line options
@@ -160,6 +160,10 @@ int main(int argc, char* argv[]) {
                 nbstep = atoi(optarg);
                 break;
             }
+            case 't' : {
+                threads = atoi(optarg);
+                break;
+            }
             default : {
                 // An error message is printed in getopt_long, we just need to exit
                 printf("Error unknown parameter\n");
@@ -167,6 +171,10 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+
+#ifdef USE_OMP
+    omp_set_num_threads(threads);
+#endif
 
 #ifdef USE_CUDA
     printf("Activate CUDA\n");
