@@ -30,9 +30,14 @@
 #include <getopt.h>
 #include <cstring>
 
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 #ifdef USE_CUDA
 #include "cuda/cuExpManager.h"
 #endif
+
 #include "Abstract_ExpManager.h"
 #include "ExpManager.h"
 
@@ -107,6 +112,9 @@ int main(int argc, char* argv[]) {
             { 0, 0, 0, 0 }
     };
 
+#ifdef USE_OMP
+    omp_set_num_threads(4);
+#endif
 
     // -------------------------------------------------------------------------
     // 3) Get actual values of the command-line options
