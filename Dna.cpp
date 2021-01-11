@@ -152,32 +152,25 @@ void Dna::find_promoters_zarray(int pos_1, int pos_2){
 		if (i > z_box_end) {
 			//explicit computing
 			zArray[i] = 0;
-			int index = 0;
-			while (index < PROM_SIZE && concatenated[index] == concatenated[index+i]){
+			while (zArray[i] < PROM_SIZE && concatenated[zArray[i]] == concatenated[zArray[i]+i]){
 				zArray[i]++;
-				index++;
 			}
-			if (index > 0){
+			if (zArray[i] > 0){
 				z_box_beg = i;
-				z_box_end = i + index - 1;
+				z_box_end = i + zArray[i] - 1;
 			}
 		}
 		else {
-			int diff = i-z_box_beg - (z_box_end - i);
-			if (diff < 0) {
+			if (zArray[i-z_box_beg] < z_box_end - i + 1){
 				zArray[i] = zArray[i-z_box_beg];
 			}
 			else {
-				// bug here
-				zArray[i] = z_box_end - i + 1;
-				for (int j = 0; j <= diff; j++){
-					if (concatenated[i-z_box_beg+j] == concatenated[z_box_end+1+j]){
-						zArray[i] += 1;
-					}
-					else {
-						break;
-					}
+				int offset = 1;
+				while(concatenated[z_box_end-i+offset] == concatenated[z_box_end+offset]){
+					offset++;
 				}
+				offset--;
+				zArray[i] = z_box_end+offset - i + 1;
 			}
 		}
 	}
