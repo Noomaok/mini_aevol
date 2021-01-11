@@ -122,6 +122,29 @@ void Dna::do_duplication(int pos_1, int pos_2, int pos_3) {
     }
 }
 
+void Dna::find_promoters_zarray(int pos_1, int pos_2){
+	// Z algorithm https://www.geeksforgeeks.org/z-algorithm-linear-time-pattern-searching-algorithm/
+	//TO DELETE
+	if (pos_1 > pos_2) {
+		std::cout << "error" << std::endl;
+	}
+	std::string concatenated = PROM_SEQ;
+	concatenated += "$";
+	for(auto it = seq_.begin() + pos_1; it != seq_.end() + pos_2; ++it) {
+		concatenated += *it;
+	}
+	//TODELETE
+	for (int i = 0; i < PROM_SIZE; i++){
+		if (concatenated[i] != PROM_SEQ[i]){
+			std::cout << "erreur promoter " << concatenated[i] << PROM_SEQ[i] << std::endl;
+		}
+	}
+	const int zArray_length = pos_2 - pos_1 + 1 + PROM_SIZE;
+	std::cout << zArray_length << std::endl;
+	int zArray[zArray_length];
+}
+
+
 int Dna::promoter_at(int pos) {
     int prom_dist[PROM_SIZE];
 
