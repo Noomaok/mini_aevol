@@ -163,7 +163,21 @@ void Dna::find_promoters_zarray(int pos_1, int pos_2){
 			}
 		}
 		else {
-			zArray[i] = zArray[i-z_box_beg];
+			int diff = i-z_box_beg - (z_box_end - i);
+			if (diff < 0) {
+				zArray[i] = zArray[i-z_box_beg];
+			}
+			else {
+				zArray[i] = z_box_end - i + 1;
+				for (int j = 0; j <= diff; j++){
+					if (concatenated[i-z_box_beg+j] == concatenated[z_box_end+1+j]){
+						zArray[i] += 1;
+					}
+					else {
+						break;
+					}
+				}
+			}
 		}
 	}
 	for (int i = 0; i < zArray_length; i++){
