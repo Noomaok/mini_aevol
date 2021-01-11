@@ -8,8 +8,10 @@
 
 Dna::Dna(int length, Threefry::Gen &&rng) : seq_(length) {
     // Generate a random genome
+    seq_ = boost::dynamic_bitset<>(length);
     for (int32_t i = 0; i < length; i++) {
-        seq_[i] = '0' + rng.random(NB_BASE);
+        seq_.set(i, rng.random(NB_BASE));
+        //seq_[i] = '0' + rng.random(NB_BASE);
     }
 }
 
@@ -18,23 +20,24 @@ int Dna::length() const {
 }
 
 void Dna::save(gzFile backup_file) {
-    int dna_length = length();
+    std::string dna_seq;
+    to_string(seq_, dna_seq);
+    int dna_length = dna_seq.length();
     gzwrite(backup_file, &dna_length, sizeof(dna_length));
-    gzwrite(backup_file, seq_.data(), dna_length * sizeof(seq_[0]));
+    gzwrite(backup_file, dna_seq.c_str(), dna_length * sizeof(char));
 }
 
 void Dna::load(gzFile backup_file) {
     int dna_length;
     gzread(backup_file, &dna_length, sizeof(dna_length));
-
-    char tmp_seq[dna_length];
-    gzread(backup_file, tmp_seq, dna_length * sizeof(tmp_seq[0]));
-
-    seq_ = std::vector<char>(tmp_seq, tmp_seq + dna_length);
+    char * dna_seq_char = new char[dna_length];
+    gzread(backup_file, dna_seq_char, dna_length * sizeof(char));
+    std::string dna_seq(dna_seq_char, dna_length);
+    seq_ = boost::dynamic_bitset<>(dna_seq);
 }
 
-void Dna::set(int pos, char c) {
-    seq_[pos] = c;
+void Dna::set(int pos, bool c) {
+    seq_.set(pos, c);
 }
 
 /**
@@ -45,7 +48,15 @@ void Dna::set(int pos, char c) {
  */
 void Dna::remove(int pos_1, int pos_2) {
     assert(pos_1 >= 0 && pos_2 >= pos_1 && pos_2 <= seq_.size());
-    seq_.erase(seq_.begin() + pos_1, seq_.begin() + pos_2);
+    
+    boost::dynamic_bitset<> tmp_seq_ = boost::dynamic_bitset<>();
+    for(int i = 0; i < pos_1; i++) {
+        tmp_seq_.push_back(seq_[i]);
+    }
+    for(int i = pos_2; i < seq_.size(); i++) {
+        tmp_seq_.push_back(seq_[i]);
+    }
+    seq_ = tmp_seq_;
 }
 
 /**
@@ -55,11 +66,11 @@ void Dna::remove(int pos_1, int pos_2) {
  * @param seq : the sequence itself
  * @param seq_length : the size of the sequence
  */
-void Dna::insert(int pos, std::vector<char> seq) {
+void Dna::insert(int pos, boost::dynamic_bitset<> seq) {
 // Insert sequence 'seq' at position 'pos'
     assert(pos >= 0 && pos < seq_.size());
 
-    seq_.insert(seq_.begin() + pos, seq.begin(), seq.end());
+    //seq_.insert(seq_.begin() + pos, seq.begin(), seq.end());
 }
 
 /**
@@ -73,16 +84,16 @@ void Dna::insert(int pos, Dna *seq) {
 // Insert sequence 'seq' at position 'pos'
     assert(pos >= 0 && pos < seq_.size());
 
-    seq_.insert(seq_.begin() + pos, seq->seq_.begin(), seq->seq_.end());
+    //seq_.insert(seq_.begin() + pos, seq->seq_.begin(), seq->seq_.end());
 }
 
 void Dna::do_switch(int pos) {
-    if (seq_[pos] == '0') seq_[pos] = '1';
-    else seq_[pos] = '0';
+    seq_.flip(pos);
 }
 
 void Dna::do_duplication(int pos_1, int pos_2, int pos_3) {
     // Duplicate segment [pos_1; pos_2[ and insert the duplicate before pos_3
+    /*
     char *duplicate_segment = NULL;
 
     int32_t seg_length;
@@ -120,6 +131,7 @@ void Dna::do_duplication(int pos_1, int pos_2, int pos_3) {
 
         insert(pos_3, seq_dupl);
     }
+    */
 }
 
 int Dna::promoter_at(int pos) {
@@ -131,7 +143,7 @@ int Dna::promoter_at(int pos) {
             search_pos -= seq_.size();
         // Searching for the promoter
         prom_dist[motif_id] =
-                PROM_SEQ[motif_id] == seq_[search_pos] ? 0 : 1;
+                PROM_SEQ[motif_id] == seq_[search_pos]+48 ? 0 : 1;
 
     }
 
@@ -196,7 +208,7 @@ bool Dna::shine_dal_start(int pos) {
         if (t_pos >= seq_.size())
             t_pos -= seq_.size();
 
-        if (seq_[t_pos] == SHINE_DAL_SEQ[k_t]) {
+        if (seq_[t_pos]+48 == SHINE_DAL_SEQ[k_t]) {
             start = true;
         } else {
             start = false;
@@ -216,7 +228,7 @@ bool Dna::protein_stop(int pos) {
         if (t_k >= seq_.size())
             t_k -= seq_.size();
 
-        if (seq_[t_k] == PROTEIN_END[k]) {
+        if (seq_[t_k]+48 == PROTEIN_END[k]) {
             is_protein = true;
         } else {
             is_protein = false;
@@ -236,7 +248,7 @@ int Dna::codon_at(int pos) {
         t_pos = pos + i;
         if (t_pos >= seq_.size())
             t_pos -= seq_.size();
-        if (seq_[t_pos] == '1')
+        if (seq_[t_pos]+48 == '1')
             value += 1 << (CODON_SIZE - i - 1);
     }
 

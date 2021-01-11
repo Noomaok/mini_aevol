@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <vector>
+#include <boost/dynamic_bitset.hpp>
 #include <zlib.h>
 
 #include "Threefry.h"
@@ -27,13 +27,13 @@ public:
 
     void load(gzFile backup_file);
 
-    void set(int pos, char c);
+    void set(int pos, bool c);
 
     /// Remove the DNA inbetween pos_1 and pos_2
     void remove(int pos_1, int pos_2);
 
     /// Insert a sequence of a given length at a given position into the DNA of the Organism
-    void insert(int pos, std::vector<char> seq);
+    void insert(int pos, boost::dynamic_bitset<> seq);
 
     /// Insert a sequence of a given length at a given position into the DNA of the Organism
     void insert(int pos, Dna *seq);
@@ -52,5 +52,5 @@ public:
 
     int codon_at(int pos);
 
-    std::vector<char> seq_;
+    boost::dynamic_bitset<> seq_;
 };
