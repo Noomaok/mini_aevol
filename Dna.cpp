@@ -123,25 +123,59 @@ void Dna::do_duplication(int pos_1, int pos_2, int pos_3) {
 }
 
 void Dna::find_promoters_zarray(int pos_1, int pos_2){
+	const int zArray_length = pos_2 - pos_1 + 1 + PROM_SIZE;
 	// Z algorithm https://www.geeksforgeeks.org/z-algorithm-linear-time-pattern-searching-algorithm/
 	//TO DELETE
 	if (pos_1 > pos_2) {
 		std::cout << "error" << std::endl;
 	}
 	std::string concatenated = PROM_SEQ;
-	concatenated += "$";
-	for(auto it = seq_.begin() + pos_1; it != seq_.end() + pos_2; ++it) {
-		concatenated += *it;
+	concatenated += '$';
+	// std::cout << concatenated << std::endl;
+	for (int i = pos_1; i < pos_2; i++){
+		concatenated += seq_[i];
 	}
+	// std::cout << concatenated << std::endl;
 	//TODELETE
 	for (int i = 0; i < PROM_SIZE; i++){
 		if (concatenated[i] != PROM_SEQ[i]){
 			std::cout << "erreur promoter " << concatenated[i] << PROM_SEQ[i] << std::endl;
 		}
 	}
-	const int zArray_length = pos_2 - pos_1 + 1 + PROM_SIZE;
-	std::cout << zArray_length << std::endl;
+	// std::cout << zArray_length << std::endl;
 	int zArray[zArray_length];
+	int z_box_beg = 0;
+	int z_box_end = 0;
+	zArray[0] = -1;
+	//no value at index 0
+	for (int i = 1; i < zArray_length; i++){
+		if (i > z_box_end) {
+			//explicit computing
+			zArray[i] = 0;
+			int index = 0;
+			while (index < PROM_SIZE && concatenated[index] == concatenated[index+i]){
+				zArray[i]++;
+				index++;
+			}
+			if (index > 0){
+				z_box_beg = i;
+				z_box_end = i + index - 1;
+			}
+		}
+		else {
+			zArray[i] = zArray[i-z_box_beg];
+		}
+	}
+	for (int i = 0; i < zArray_length; i++){
+		// if (zArray[i] >= PROM_SIZE){
+		// 	std::cout << concatenated << std::endl;
+		// 	std::cout << zArray[i] << std::endl;
+		// }
+		std::cout << zArray[i] << " ";
+	}
+	std::cout <<std::endl;
+	std::cout << concatenated << std::endl;
+	// std::cout << concatenated[PROM_SIZE] << " " << zArray[PROM_SIZE] << std::endl;
 }
 
 
