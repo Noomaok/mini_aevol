@@ -168,6 +168,7 @@ void Dna::find_promoters_zarray(int pos_1, int pos_2){
 				zArray[i] = zArray[i-z_box_beg];
 			}
 			else {
+				// bug here
 				zArray[i] = z_box_end - i + 1;
 				for (int j = 0; j <= diff; j++){
 					if (concatenated[i-z_box_beg+j] == concatenated[z_box_end+1+j]){
