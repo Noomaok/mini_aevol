@@ -32,6 +32,7 @@
 #include <zlib.h>
 #include <list>
 #include <cstdint>
+#include <string>
 
 #include "RNA.h"
 #include "Protein.h"
