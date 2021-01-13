@@ -45,7 +45,7 @@ public:
 
     int promoter_at(int pos);
 
-	//finding promoters through a z array algorithm
+	// not used
 	void find_promoters_zarray(int pos_1, int pos_2);
 
     int terminator_at(int pos);
