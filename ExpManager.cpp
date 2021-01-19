@@ -159,6 +159,61 @@ ExpManager::ExpManager(int time) {
  *
  * @param t : simulated time of the checkpoint
  */
+void ExpManager::save(int t, Organism **indiv_save_, Threefry *rng_save_) const {
+
+    char exp_backup_file_name[255];
+
+    sprintf(exp_backup_file_name, "backup/backup_%d.zae", t);
+
+    // -------------------------------------------------------------------------
+    // Open backup files
+    // -------------------------------------------------------------------------
+    gzFile exp_backup_file = gzopen(exp_backup_file_name, "w");
+
+
+    // -------------------------------------------------------------------------
+    // Check that files were correctly opened
+    // -------------------------------------------------------------------------
+    if (exp_backup_file == Z_NULL) {
+        printf("Error: could not open backup file %s\n",
+               exp_backup_file_name);
+        exit(EXIT_FAILURE);
+    }
+
+
+    // -------------------------------------------------------------------------
+    // Write the backup file
+    // -------------------------------------------------------------------------
+    gzwrite(exp_backup_file, &t, sizeof(t));
+
+    gzwrite(exp_backup_file, &grid_height_, sizeof(grid_height_));
+    gzwrite(exp_backup_file, &grid_width_, sizeof(grid_width_));
+
+    gzwrite(exp_backup_file, &backup_step_, sizeof(backup_step_));
+
+    gzwrite(exp_backup_file, &mutation_rate_, sizeof(mutation_rate_));
+
+    for (int i = 0; i < FUZZY_SAMPLING; i++) {
+        double tmp = target[i];
+        gzwrite(exp_backup_file, &tmp, sizeof(tmp));
+    }
+
+    for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
+        indiv_save_[indiv_id]->save(exp_backup_file);
+    }
+
+    rng_save_->save(exp_backup_file);
+
+    if (gzclose(exp_backup_file) != Z_OK) {
+        cerr << "Error while closing backup file" << endl;
+    }
+}
+
+/**
+ * Checkpointing/Backup of the population of organisms
+ *
+ * @param t : simulated time of the checkpoint
+ */
 void ExpManager::save(int t) const {
 
     char exp_backup_file_name[255];
@@ -364,57 +419,55 @@ void ExpManager::prepare_mutation(int indiv_id) const {
  *
  */
 void ExpManager::run_a_step() {
-    #pragma omp parallel
-    { 
-        // Running the simulation process for each organism
-        #pragma omp for schedule(static)
-        for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
-            selection(indiv_id);
-            prepare_mutation(indiv_id);
+    
+    // Running the simulation process for each organism
+    #pragma omp for schedule(static)
+    for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
+        selection(indiv_id);
+        prepare_mutation(indiv_id);
 
-            if (dna_mutator_array_[indiv_id]->hasMutate()) {
-                auto &mutant = internal_organisms_[indiv_id];
-                mutant->apply_mutations(dna_mutator_array_[indiv_id]->mutation_list_);
-                mutant->evaluate(target);
+        if (dna_mutator_array_[indiv_id]->hasMutate()) {
+            auto &mutant = internal_organisms_[indiv_id];
+            mutant->apply_mutations(dna_mutator_array_[indiv_id]->mutation_list_);
+            mutant->evaluate(target);
+        }
+    }
+
+    // Swap Population
+    #pragma omp for schedule(static)
+    for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
+        prev_internal_organisms_[indiv_id] = internal_organisms_[indiv_id];
+        internal_organisms_[indiv_id] = nullptr;
+    }
+
+    // Search for the best
+    #pragma omp single
+    {
+        double best_fitness = prev_internal_organisms_[0]->fitness;
+        int idx_best = 0;
+        for (int indiv_id = 1; indiv_id < nb_indivs_; indiv_id++) {
+            if (prev_internal_organisms_[indiv_id]->fitness > best_fitness) {
+                idx_best = indiv_id;
+                best_fitness = prev_internal_organisms_[indiv_id]->fitness;
             }
         }
+        best_indiv = prev_internal_organisms_[idx_best];
 
-        // Swap Population
-        #pragma omp for schedule(static)
-        for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
-            prev_internal_organisms_[indiv_id] = internal_organisms_[indiv_id];
-            internal_organisms_[indiv_id] = nullptr;
-        }
+        // Stats
+        stats_best->reinit(AeTime::time());
+        stats_mean->reinit(AeTime::time());
+    }
 
-        // Search for the best
-        #pragma omp single
-        {
-            double best_fitness = prev_internal_organisms_[0]->fitness;
-            int idx_best = 0;
-            for (int indiv_id = 1; indiv_id < nb_indivs_; indiv_id++) {
-                if (prev_internal_organisms_[indiv_id]->fitness > best_fitness) {
-                    idx_best = indiv_id;
-                    best_fitness = prev_internal_organisms_[indiv_id]->fitness;
-                }
-            }
-            best_indiv = prev_internal_organisms_[idx_best];
+    #pragma omp for schedule(static)
+    for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
+        if (dna_mutator_array_[indiv_id]->hasMutate())
+            prev_internal_organisms_[indiv_id]->compute_protein_stats();
+    }
 
-            // Stats
-            stats_best->reinit(AeTime::time());
-            stats_mean->reinit(AeTime::time());
-        }
-
-        #pragma omp for schedule(static)
-        for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
-            if (dna_mutator_array_[indiv_id]->hasMutate())
-                prev_internal_organisms_[indiv_id]->compute_protein_stats();
-        }
-
-        #pragma omp single
-        {
-            stats_best->write_best(best_indiv);
-            stats_mean->write_average(prev_internal_organisms_, nb_indivs_);
-        }
+    #pragma omp single
+    {
+        stats_best->write_best(best_indiv);
+        stats_mean->write_average(prev_internal_organisms_, nb_indivs_);
     }
 }
 
@@ -443,22 +496,42 @@ void ExpManager::run_evolution(int nb_gen) {
 
     printf("Running evolution from %d to %d\n", AeTime::time(), AeTime::time() + nb_gen);
 
+    #pragma omp parallel
     for (int gen = 0; gen < nb_gen; gen++) {
+        #pragma omp single
         AeTime::plusplus();
 
         TIMESTAMP(1, run_a_step();)
 
+        #pragma omp single
         printf("Generation %d : Best individual fitness %e\n", AeTime::time(), best_indiv->fitness);
         FLUSH_TRACES(gen)
 
+        #pragma omp for schedule(static)
         for (int indiv_id = 0; indiv_id < nb_indivs_; ++indiv_id) {
             delete dna_mutator_array_[indiv_id];
             dna_mutator_array_[indiv_id] = nullptr;
         }
-
+ 
         if (AeTime::time() % backup_step_ == 0) {
-            save(AeTime::time());
-            cout << "Backup for generation " << AeTime::time() << " done !" << endl;
+            Organism *prev_internal_organisms_copy_[nb_indivs_];
+            Threefry *rng_copy_;
+
+            //create a duplicate in memory of current organisms
+            for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
+                prev_internal_organisms_copy_[indiv_id] = new Organism(prev_internal_organisms_[indiv_id]);
+            }
+            rng_copy_ = new Threefry(*rng_);
+
+            #pragma omp single nowait 
+            {
+                save(AeTime::time(), prev_internal_organisms_copy_, rng_copy_);
+                cout << "Backup for generation " << AeTime::time() << " done !" << endl;
+
+                for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++)
+                    delete prev_internal_organisms_copy_[indiv_id];
+                delete rng_copy_;
+            }
         }
     }
     STOP_TRACER

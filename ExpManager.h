@@ -51,6 +51,8 @@ public:
 
     ~ExpManager() override;
 
+    void save(int t, Organism **indiv_save_, Threefry *rng_save_) const;
+
     void save(int t) const final;
 
     void load(int t) final;

@@ -24,6 +24,8 @@ public:
 
     Threefry(int X, int Y, gzFile backup_file);
 
+    Threefry(const Threefry &rng);
+
     std::vector<crt_value_type> &counters() { return counters_; }
     int get_seed() const { return seed_[1]; }
 

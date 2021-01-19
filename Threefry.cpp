@@ -22,6 +22,14 @@ Threefry::Threefry(int X, int Y, gzFile backup_file)
   counters_ = std::vector<crt_value_type>(tmp_counters, tmp_counters + counters_.size());
 }
 
+Threefry::Threefry(const Threefry &rng) {
+  this->X_ = rng.X_;
+  this->Y_ = rng.Y_;
+  this->N_ = rng.N_;
+  this->counters_ = rng.counters_;
+  this->seed_ = rng.seed_;
+}
+
 int32_t Threefry::Gen::roulette_random(double* probs, int32_t nb_elts, bool verbose )
 {
     //cloned_probs.resize(nb_elts);
