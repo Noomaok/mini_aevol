@@ -599,6 +599,10 @@ bool Organism::do_switch(int pos) {
     if (length() >= PROM_SIZE)
         look_for_new_promoters_around(pos, mod(pos + 1, length()));
 
+    if (length() >= TERM_SIZE){
+        look_for_new_terminators_around(pos, pos + 1);
+    }
+
     return true;
 }
 
@@ -617,6 +621,23 @@ void Organism::remove_promoters_around(int32_t pos_1, int32_t pos_2) {
                                           pos_2);
     } else {
         remove_all_promoters();
+    }
+}
+
+void Organism::look_for_new_terminators_around(int32_t pos_1, int32_t pos_2){
+    if (dna_->length() >= TERM_SIZE) {
+        for (int32_t i = pos_1 - TERM_SIZE + 1; i < pos_2; i++) {
+            int dist = dna_->terminator_at(i);
+            // std::cout << dist << " ";
+            if (dist == 0){
+                for (int j = 0; j < TERM_SIZE; j++) {
+                    std::cout << dna_->seq_[i+j];
+                }
+                std::cout <<std::endl;
+            }
+            // if (dist <= ?) {
+            // }
+        }
     }
 }
 
