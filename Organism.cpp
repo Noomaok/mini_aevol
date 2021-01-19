@@ -600,7 +600,7 @@ bool Organism::do_switch(int pos) {
         look_for_new_promoters_around(pos, mod(pos + 1, length()));
 
     if (length() >= TERM_SIZE){
-        look_for_new_terminators_around(pos, pos + 1);
+        look_for_new_terminators_around(mod(pos - TERM_SIZE + 1, dna_->length()), mod(pos + 1, length()));
     }
 
     return true;
@@ -626,17 +626,31 @@ void Organism::remove_promoters_around(int32_t pos_1, int32_t pos_2) {
 
 void Organism::look_for_new_terminators_around(int32_t pos_1, int32_t pos_2){
     if (dna_->length() >= TERM_SIZE) {
-        for (int32_t i = pos_1 - TERM_SIZE + 1; i < pos_2; i++) {
-            int dist = dna_->terminator_at(i);
-            // std::cout << dist << " ";
-            if (dist == 0){
-                for (int j = 0; j < TERM_SIZE; j++) {
-                    std::cout << dna_->seq_[i+j];
+
+        if (pos_1 > pos_2){
+            //search in two steps
+
+            //after pos_1
+            for (int32_t i = pos_1; i < dna_->length(); i++) {
+                int dist = dna_->promoter_at(i);
+
+                if (dist == 0) {
+                    //found
                 }
-                std::cout <<std::endl;
             }
-            // if (dist <= ?) {
-            // }
+
+            //before pos_1
+        }
+        else {
+            for (int32_t i = pos_1 - TERM_SIZE + 1; i < pos_2; i++) {
+                int dist = dna_->terminator_at(i);
+                // if (dist == 0){
+                //     for (int j = 0; j < TERM_SIZE; j++) {
+                //         std::cout << dna_->seq_[i+j];
+                //     }
+                //     std::cout <<std::endl;
+                // }
+            }
         }
     }
 }
@@ -692,6 +706,7 @@ void Organism::look_for_new_promoters_starting_between(int32_t pos_1, int32_t po
     // keep 0 for pos_1 and dna_->length() for pos_2.
 
     if (pos_1 >= pos_2) {
+        std::cout << "two steps search" << std::endl;
         look_for_new_promoters_starting_after(pos_1);
         look_for_new_promoters_starting_before(pos_2);
         return;
