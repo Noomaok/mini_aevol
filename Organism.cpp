@@ -47,7 +47,7 @@ Organism::Organism(int length, Threefry::Gen &&rng) {
         }
     }
 
-    std::cout << "début : " << terminators.size() << std::endl;
+    // std::cout << "début : " << terminators.size() << std::endl;
 }
 
 /**
@@ -621,7 +621,7 @@ bool Organism::do_switch(int pos) {
     if (length() >= TERM_SIZE){
         look_for_new_terminators_around(mod(pos - TERM_SIZE + 1, dna_->length()), mod(pos + 1, length()));
     }
-    std::cout << terminators.size()  << " " << promoters_.size() << std::endl;
+    // std::cout << terminators.size()  << " " << promoters_.size() << std::endl;
 
     return true;
 }
@@ -665,7 +665,7 @@ void Organism::look_for_new_terminators_around(int32_t pos_1, int32_t pos_2){
                 int dist = dna_->terminator_at(i);
                 if (dist == TERM_STEM_SIZE) {
                     // std::cout << "after ";
-                    dna_->print_terminator_at(i);
+                    // dna_->print_terminator_at(i);
                     terminators.insert(i);
                 }
             }
@@ -674,7 +674,7 @@ void Organism::look_for_new_terminators_around(int32_t pos_1, int32_t pos_2){
                 int dist = dna_->terminator_at(i);
                 if (dist == TERM_STEM_SIZE) {
                     // std::cout << "before ";
-                    dna_->print_terminator_at(i);
+                    // dna_->print_terminator_at(i);
                     terminators.insert(i);
                 }
             }
@@ -683,7 +683,7 @@ void Organism::look_for_new_terminators_around(int32_t pos_1, int32_t pos_2){
             for (int32_t i = pos_1 - TERM_SIZE + 1; i < pos_2; i++) {
                 int dist = dna_->terminator_at(i);
                 if (dist == TERM_STEM_SIZE){
-                    dna_->print_terminator_at(i);
+                    // dna_->print_terminator_at(i);
                     terminators.insert(i);
                 }
             }
