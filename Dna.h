@@ -48,6 +48,8 @@ public:
 	// not used
 	void find_promoters_zarray(int pos_1, int pos_2);
 
+    void print_terminator_at(int pos);
+
     int terminator_at(int pos);
 
     bool shine_dal_start(int pos);
