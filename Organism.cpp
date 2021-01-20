@@ -746,15 +746,12 @@ void Organism::look_for_new_promoters_starting_between(int32_t pos_1, int32_t po
         look_for_new_promoters_starting_before(pos_2);
         return;
     }
-	// dna_->find_promoters_zarray(pos_1, pos_2);
 
     // Hamming distance of the sequence from the promoter consensus
-	#pragma omp parallel for schedule(static)
 	for (int32_t i = pos_1; i < pos_2; i++) {
         int8_t dist = dna_->promoter_at(i);
 
         if (dist <= PROM_MAX_DIFF) { // dist takes the hamming distance of the sequence from the consensus
-			#pragma omp critical
             add_new_promoter(i, dist);
         }
     }
