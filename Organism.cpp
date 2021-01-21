@@ -638,6 +638,7 @@ void Organism::look_for_new_terminators_around(int32_t pos_1, int32_t pos_2){
     if (dna_->length() >= TERM_SIZE) {
         if (pos_1 > pos_2){
             //search in two steps
+            // possible de simplifier en skippant les lettres X X du terminator mais négligeable probablement
 
             //after pos_1
             for (int32_t i = pos_1; i < dna_->length(); i++) {
