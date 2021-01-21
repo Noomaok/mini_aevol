@@ -644,7 +644,6 @@ void Organism::look_for_new_terminators_around(int32_t pos_1, int32_t pos_2){
             for (int32_t i = pos_1; i < dna_->length(); i++) {
                 int dist = dna_->terminator_at(i);
                 if (dist == TERM_STEM_SIZE) {
-                    #pragma omp critical
                     terminators.insert(i);
                 }
             }
