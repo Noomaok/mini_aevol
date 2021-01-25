@@ -167,6 +167,14 @@ void Organism::evaluate(const double *target) {
     compute_RNA();
     search_start_protein();
     compute_protein();
+    if (protein_count_ > 0){
+        std::cout << protein_count_ << std::endl;
+        for (int i = 0; i < protein_count_; i++){
+            std::cout << proteins[i]->protein_length << "," << proteins[i]->protein_start << "," << proteins[i]->protein_end<< "/";
+        }
+        std::cout << std::endl;
+    }
+
     translate_protein();
     compute_phenotype();
     compute_fitness(target);
