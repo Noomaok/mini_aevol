@@ -248,6 +248,7 @@ void Organism::search_start_protein() {
             loop_back(c_pos);
 
             while (c_pos != rna->end) {
+                // dont search the whole rna, only insert or delete around the mutation
                 if (dna_->shine_dal_start(c_pos)) {
                     rna->start_prot.push_back(c_pos);
                 }
