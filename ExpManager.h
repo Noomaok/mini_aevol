@@ -60,6 +60,8 @@ public:
 private:
     void run_a_step();
 
+    void first_eval();
+
     void prepare_mutation(int indiv_id) const;
 
     void selection(int indiv_id) const;
