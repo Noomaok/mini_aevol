@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <zlib.h>
+#include <string>
 
 #include "Threefry.h"
 #include "aevol_constants.h"
@@ -43,6 +44,9 @@ public:
     void do_duplication(int pos_1, int pos_2, int pos_3);
 
     int promoter_at(int pos);
+
+	// not used
+	void find_promoters_zarray(int pos_1, int pos_2);
 
     int terminator_at(int pos);
 
