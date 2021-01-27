@@ -28,6 +28,7 @@
 
 #include <iostream>
 #include <zlib.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -449,8 +450,16 @@ void ExpManager::run_evolution(int nb_gen) {
         }
 
         if (AeTime::time() % backup_step_ == 0) {
-            save(AeTime::time());
-            cout << "Backup for generation " << AeTime::time() << " done !" << endl;
+            pid_t pid = fork();
+            if(pid == 0) {
+                save(AeTime::time());
+                cout << "Backup for generation " << AeTime::time() << " done !" << endl;
+                _exit(0);
+            }
+            else if(pid < 0) {
+                printf("Error when writing to files\n");
+                _exit(1);
+            }
         }
     }
     STOP_TRACER
