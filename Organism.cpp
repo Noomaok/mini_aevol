@@ -40,6 +40,12 @@ Organism::Organism(int length, Threefry::Gen &&rng) {
     rna_count_ = 0;
 
     dna_ = new Dna(length, std::move(rng));
+    
+    for (int i = 0; i < length; i++){
+        if (dna_->terminator_at(i) == TERM_STEM_SIZE){
+            terminators.insert(i);
+        }
+    }
 }
 
 /**
@@ -51,6 +57,7 @@ Organism::Organism(const std::shared_ptr<Organism> &clone) {
     rna_count_ = 0;
     dna_ = new Dna(*(clone->dna_));
     promoters_ = clone->promoters_;
+    terminators = clone->terminators;
 }
 
 /**
@@ -175,7 +182,6 @@ void Organism::evaluate(const double *target) {
 void Organism::compute_RNA() {
     proteins.clear();
     rnas.clear();
-    terminators.clear();
 
     rnas.resize(promoters_.size());
 
@@ -190,22 +196,13 @@ void Organism::compute_RNA() {
 
         bool terminator_found = false;
 
-        while (!terminator_found) {
-            int term_dist_leading = dna_->terminator_at(cur_pos);
-
-            if (term_dist_leading == TERM_STEM_SIZE)
-                terminator_found = true;
-            else {
-                cur_pos++;
-                loop_back(cur_pos);
-
-                if (cur_pos == start_pos) {
-                    break;
-                }
-            }
+        if (terminators.size() > 0){
+            terminator_found = true;
+            auto it = terminators.lower_bound(cur_pos);
+            cur_pos = *it;
         }
 
-        if (terminator_found) {
+        if (terminator_found){
             int32_t rna_end = cur_pos + TERM_SIZE;
             loop_back(rna_end);
 
@@ -595,9 +592,16 @@ bool Organism::do_switch(int pos) {
     // Remove promoters containing the switched base
     remove_promoters_around(pos, mod(pos + 1, length()));
 
+    //remove terminators containing the switched base
+    remove_terminators_around(mod(pos - TERM_SIZE + 1, dna_->length()), mod(pos + 1, length()));
+
     // Look for potential new promoters containing the switched base
     if (length() >= PROM_SIZE)
         look_for_new_promoters_around(pos, mod(pos + 1, length()));
+
+    if (length() >= TERM_SIZE){
+        look_for_new_terminators_around(mod(pos - TERM_SIZE + 1, dna_->length()), mod(pos + 1, length()));
+    }
 
     return true;
 }
@@ -617,6 +621,48 @@ void Organism::remove_promoters_around(int32_t pos_1, int32_t pos_2) {
                                           pos_2);
     } else {
         remove_all_promoters();
+    }
+}
+
+void Organism::remove_terminators_around(int32_t pos_1, int32_t pos_2) {
+    if (pos_1 > pos_2) {
+        terminators.erase(terminators.lower_bound(pos_1), terminators.end());
+        terminators.erase(terminators.begin(), terminators.upper_bound(pos_2 - 1));
+    } else {
+        // suppression is in [pos1, pos_2[, pos_2 is excluded
+        terminators.erase(terminators.lower_bound(pos_1), terminators.upper_bound(pos_2 - 1));
+    }
+}
+
+void Organism::look_for_new_terminators_around(int32_t pos_1, int32_t pos_2){
+    if (dna_->length() >= TERM_SIZE) {
+        if (pos_1 > pos_2){
+            //search in two steps
+            // possible de simplifier en skippant les lettres X X du terminator mais négligeable probablement
+
+            //after pos_1
+            for (int32_t i = pos_1; i < dna_->length(); i++) {
+                int dist = dna_->terminator_at(i);
+                if (dist == TERM_STEM_SIZE) {
+                    terminators.insert(i);
+                }
+            }
+            //before pos_1
+            for (int32_t i = 0; i < pos_2; i++) {
+                int dist = dna_->terminator_at(i);
+                if (dist == TERM_STEM_SIZE) {
+                    terminators.insert(i);
+                }
+            }
+        }
+        else {
+            for (int32_t i = pos_1 - TERM_SIZE + 1; i < pos_2; i++) {
+                int dist = dna_->terminator_at(i);
+                if (dist == TERM_STEM_SIZE){
+                    terminators.insert(i);
+                }
+            }
+        }
     }
 }
 
@@ -675,15 +721,12 @@ void Organism::look_for_new_promoters_starting_between(int32_t pos_1, int32_t po
         look_for_new_promoters_starting_before(pos_2);
         return;
     }
-	// dna_->find_promoters_zarray(pos_1, pos_2);
 
     // Hamming distance of the sequence from the promoter consensus
-	#pragma omp parallel for schedule(static)
 	for (int32_t i = pos_1; i < pos_2; i++) {
         int8_t dist = dna_->promoter_at(i);
 
         if (dist <= PROM_MAX_DIFF) { // dist takes the hamming distance of the sequence from the consensus
-			#pragma omp critical
             add_new_promoter(i, dist);
         }
     }

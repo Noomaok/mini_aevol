@@ -125,6 +125,10 @@ private:
 
     void remove_promoters_starting_before(int32_t pos);
 
+    void remove_terminators_around(int32_t pos_1, int32_t pos_2);
+
+    void look_for_new_terminators_around(int32_t pos_1, int32_t pos_2);
+
     void look_for_new_promoters_around(int32_t pos_1, int32_t pos_2);
 
     void look_for_new_promoters_around(int32_t pos);

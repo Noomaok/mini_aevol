@@ -232,6 +232,17 @@ int Dna::terminator_at(int pos) {
     return dist_term_lead;
 }
 
+void Dna::print_terminator_at(int pos) {
+    for (int j = 0; j < TERM_SIZE; j++) {
+        // loop back the dna inf needed
+        int index = pos+j;
+        if (index >= length()) index %= length();
+
+        std::cout << seq_[index];
+    }
+    std::cout <<std::endl;
+}
+
 bool Dna::shine_dal_start(int pos) {
     bool start = false;
     int t_pos, k_t;
